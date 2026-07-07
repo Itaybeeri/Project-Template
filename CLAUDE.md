@@ -3,6 +3,17 @@
 > Router file. Keep it small and stable. The agent reads this at the start of every
 > session; detailed content lives in the files it points to, loaded on demand.
 
+## First session — fill the placeholders BEFORE any feature work
+
+If this file or any `docs/` file still contains `<FILL: …>` or `<PROJECT_NAME>` markers, the
+project has **not** been initialized yet. On the first session, the agent MUST **interview the
+human one question at a time and fill every placeholder** across `CLAUDE.md` and `docs/` (name,
+what it does, the core mental model, stack, build/test/lint/run commands, guardrails) before
+starting feature 0001 — do not leave `<FILL>` markers dangling and do not write code until the
+router reflects the real project. Placeholders that are genuinely not yet knowable (e.g. real
+run commands before the code is scaffolded) get an honest "populated in <phase>" note, not a
+bare `<FILL>`.
+
 ## Project
 
 <FILL: one paragraph — what this project is, who it's for, and the deliverable.>
@@ -81,6 +92,10 @@ Router-level invariants (full rules in those two files):
 - **One feature = one branch (`feat/<NNNN>-...`) → one PR into `<FILL: default branch,
   e.g. main>`.** Never implement on the default branch or in the main checkout — use a
   dedicated worktree/branch.
+- **Commit after every agreed decision or completed step — never leave agreed work
+  uncommitted, so nothing is forgotten.** This applies to docs/brainstorm/spec artifacts,
+  not just code. Commit on the feature's `feat/<NNNN>-...` branch (branch first if on the
+  default branch); don't commit feature work directly on the default branch.
 - **Commit + push the branch after every green step** (don't batch locally).
 - **Nothing merges without a PR and a fully green gate where every acceptance criterion is
   COVERED; the Test phase + a default-branch sync happen BEFORE the PR is opened.** The
