@@ -81,6 +81,10 @@ Router-level invariants (full rules in those two files):
 - **One feature = one branch (`feat/<NNNN>-...`) → one PR into `<FILL: default branch,
   e.g. main>`.** Never implement on the default branch or in the main checkout — use a
   dedicated worktree/branch.
+- **Commit after every agreed decision or completed step — never leave agreed work
+  uncommitted, so nothing is forgotten.** This applies to docs/brainstorm/spec artifacts,
+  not just code. Commit on the feature's `feat/<NNNN>-...` branch (branch first if on the
+  default branch); don't commit feature work directly on the default branch.
 - **Commit + push the branch after every green step** (don't batch locally).
 - **Nothing merges without a PR and a fully green gate where every acceptance criterion is
   COVERED; the Test phase + a default-branch sync happen BEFORE the PR is opened.** The
