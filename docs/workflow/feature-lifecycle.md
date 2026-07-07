@@ -99,8 +99,9 @@ pass). **No code until plan-review is PASS *and* the human gives the final appro
 
 ## 3. Implement  (build)
 
-- **Always** build on a dedicated `feat/<NNNN-name>` branch (a git worktree is ideal) —
-  never on the default branch and never in the main checkout.
+- **Always** build in a dedicated **git worktree** on a `feat/<NNNN-name>` branch — never on
+  the default branch, never in the primary checkout. One worktree per feature; the worktree
+  is mandatory, not optional.
 - **Before creating the branch/worktree, `git fetch` and check for an existing
   `origin/feat/<NNNN-name>`.** If it exists (a parallel agent, another machine, or a prior
   session may have started — or finished — the feature), base on / adopt it rather than

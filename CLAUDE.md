@@ -90,8 +90,8 @@ Router-level invariants (full rules in those two files):
   significant (`spec.md` + ADR). **No code before the plan is approved:** `plan-review`
   PASS **then** a human yes.
 - **One feature = one branch (`feat/<NNNN>-...`) → one PR into `<FILL: default branch,
-  e.g. main>`.** Never implement on the default branch or in the main checkout — use a
-  dedicated worktree/branch.
+  e.g. main>`.** Never implement on the default branch or in the primary checkout — **always
+  build in a dedicated git worktree**, one worktree per feature branch.
 - **Commit after every agreed decision or completed step — never leave agreed work
   uncommitted, so nothing is forgotten.** This applies to docs/brainstorm/spec artifacts,
   not just code. Commit on the feature's `feat/<NNNN>-...` branch (branch first if on the
