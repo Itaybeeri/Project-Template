@@ -20,6 +20,10 @@ These are referenced by `feature-lifecycle.md` and `continue.md`. They come from
 **superpowers** plugin for an agent harness (e.g. Claude Code). Install the plugin rather
 than copying these files. If you don't use superpowers, substitute your own equivalents.
 
+On the **first session**, the agent checks whether these are installed and, if any are
+missing, asks the human whether to install the `superpowers` plugin before feature work
+begins (see the "First session" section of `CLAUDE.md`).
+
 | Skill | When it's used (most-used first) |
 |---|---|
 | `superpowers:brainstorming` | **Brainstorm** — explore intent/options before any design. |

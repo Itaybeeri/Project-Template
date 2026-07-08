@@ -14,6 +14,11 @@ router reflects the real project. Placeholders that are genuinely not yet knowab
 run commands before the code is scaffolded) get an honest "populated in <phase>" note, not a
 bare `<FILL>`.
 
+As part of this first-session interview, the agent MUST also check whether the plugin skills
+the lifecycle leans on are installed (see `.claude/SKILLS.md`). If any are missing, **ask the
+human whether to install them** (the `superpowers` plugin) before proceeding — don't install
+silently and don't assume they're absent. If they're already installed, say so and move on.
+
 ## Project
 
 <FILL: one paragraph — what this project is, who it's for, and the deliverable.>
