@@ -1,7 +1,7 @@
 /**
  * collect.mjs — read the repo's docs + git and produce ONE project-state object.
  *
- * This is the single source of truth for the dashboard. It is deliberately
+ * This is the single source of truth for the Project Command Center. It is deliberately
  * generic: it parses whatever `CLAUDE.md`, `docs/features/FEATURE-INDEX.md`,
  * per-feature folders, `docs/adr/ADR-INDEX.md` and `docs/CI-ROADMAP.md` a
  * project has, and degrades gracefully when everything is still `<FILL:>`
@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-/** Repo root = the dashboard folder's parent (the folder lives next to docs/). */
+/** Repo root = the ProjectCommandCenter folder's parent (the folder lives next to docs/). */
 export const REPO_ROOT = resolve(HERE, '..');
 
 /** The five lifecycle phases, in order (see docs/workflow/feature-lifecycle.md). */
@@ -234,7 +234,7 @@ function enrichFromFolder(f) {
 
   f.docs = { brainstorm: !!brainstorm, spec: !!spec, planReview: !!planReview };
   f.hasFolder = !!(brainstorm || spec || planReview);
-  // Full artifact text so the dashboard can show WHAT was done in each phase.
+  // Full artifact text so the command center can show WHAT was done in each phase.
   f.artifacts = { brainstorm, spec, planReview };
 
   // Architect-review PASS is stamped in brainstorm.md and/or referenced in spec.md.

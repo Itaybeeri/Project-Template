@@ -1,8 +1,8 @@
 /**
- * serve.mjs — zero-dependency dev server for the project dashboard.
+ * serve.mjs — zero-dependency dev server for the Project Command Center.
  *
- *   node dashboard/serve.mjs            # → http://localhost:4317
- *   PORT=8080 node dashboard/serve.mjs
+ *   node ProjectCommandCenter/serve.mjs            # → http://localhost:4317
+ *   PORT=8080 node ProjectCommandCenter/serve.mjs
  *
  * Serves index.html and answers GET /api/state by re-parsing the repo LIVE on
  * every request (via collect.mjs). That is what makes the page's 60s
@@ -49,7 +49,7 @@ const server = createServer((req, res) => {
 
 server.listen(PORT, () => {
   const s = tryCollect();
-  console.log(`\n  📊  Project dashboard  →  http://localhost:${PORT}\n`);
+  console.log(`\n  📊  Project Command Center  →  http://localhost:${PORT}\n`);
   if (s) console.log(`      ${s.project.name} · ${s.features.length} features · ${s.stats.active} in flight · ${s.stats.done} done\n`);
   console.log('      Live: every refresh re-reads docs/ + git. Ctrl-C to stop.\n');
 });

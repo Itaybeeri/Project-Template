@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Project Dashboard</title>
+<title>Project Command Center</title>
 <style>
   /* ── design tokens ──────────────────────────────────────────────────────── */
   :root {
@@ -317,7 +317,7 @@ async function loadState() {
     const r = await fetch('./data.json', { cache: 'no-store' });
     if (r.ok) { LIVE = false; return await r.json(); }
   } catch (e) {}
-  throw new Error('Could not load project state. Run `node dashboard/serve.mjs` or `node dashboard/generate.mjs`.');
+  throw new Error('Could not load project state. Run `node ProjectCommandCenter/serve.mjs` or `node ProjectCommandCenter/generate.mjs`.');
 }
 
 async function refresh(fromButton) {
@@ -365,7 +365,7 @@ function render(s) {
         <section class="view" id="view-activity" hidden>${gitSection(s)}</section>
       </div>
     </div>
-    <div class="footer">Generated from <code>docs/</code> + git by <code>dashboard/collect.mjs</code> · ${LIVE ? 'live' : 'static snapshot'}</div>
+    <div class="footer">Generated from <code>docs/</code> + git by <code>ProjectCommandCenter/collect.mjs</code> · ${LIVE ? 'live' : 'static snapshot'}</div>
   `;
   wireCards(s);
   const v = new URLSearchParams(location.search).get('v');
@@ -391,7 +391,7 @@ function header(p, updated) {
       <div class="mark">◆</div>
       <div>
         <h1>${esc(p.name)}</h1>
-        <div class="sub">Project Dashboard · ${esc(p.currentBranch || '—')} ${p.defaultBranch && p.defaultBranch !== p.currentBranch ? `· default <code>${esc(p.defaultBranch)}</code>` : ''}</div>
+        <div class="sub">Project Command Center · ${esc(p.currentBranch || '—')} ${p.defaultBranch && p.defaultBranch !== p.currentBranch ? `· default <code>${esc(p.defaultBranch)}</code>` : ''}</div>
       </div>
     </div>
     <div style="text-align:right">

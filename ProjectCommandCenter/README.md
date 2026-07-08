@@ -1,4 +1,4 @@
-# Project Dashboard
+# Project Command Center
 
 A self-contained **command center** for the project: it reads the repo's own docs
 (`CLAUDE.md`, `docs/features/FEATURE-INDEX.md`, each feature folder, `docs/adr/ADR-INDEX.md`,
@@ -20,8 +20,8 @@ into every new project.
 ## Run it (live)
 
 ```bash
-node dashboard/serve.mjs          # → http://localhost:4317
-PORT=8080 node dashboard/serve.mjs
+node ProjectCommandCenter/serve.mjs          # → http://localhost:4317
+PORT=8080 node ProjectCommandCenter/serve.mjs
 ```
 
 The server re-reads `docs/` + git on **every** request, so the page's **60-second
@@ -32,7 +32,7 @@ dependencies (Node ≥ 18 only).
 ## Static snapshot (offline / shareable)
 
 ```bash
-node dashboard/generate.mjs       # writes dashboard/snapshot.html (+ data.json)
+node ProjectCommandCenter/generate.mjs       # writes ProjectCommandCenter/snapshot.html (+ data.json)
 ```
 
 `snapshot.html` is a single self-contained file with the state inlined — open it directly or
@@ -46,11 +46,11 @@ git-ignored.
 | `collect.mjs` | The parser — reads the repo, returns one project-state object. The single source of truth; both entry points use it. |
 | `serve.mjs` | Zero-dep dev server; `GET /api/state` re-parses live. |
 | `generate.mjs` | Writes `data.json` + a self-contained `snapshot.html`. |
-| `index.html` | The dashboard UI (self-contained: inline CSS/JS, no CDN). |
+| `index.html` | The command center UI (self-contained: inline CSS/JS, no CDN). |
 
 ## Copying into the template / a new project
 
-Copy the whole `dashboard/` folder. It assumes the conventional layout (`CLAUDE.md` at the
-repo root; `docs/features/FEATURE-INDEX.md`, `docs/adr/ADR-INDEX.md`, `docs/CI-ROADMAP.md`,
-and `docs/features/<NNNN-name>/{brainstorm,spec,plan-review}.md`). Nothing is hard-coded to
-this project — change the docs and the dashboard follows.
+Copy the whole `ProjectCommandCenter/` folder. It assumes the conventional layout (`CLAUDE.md`
+at the repo root; `docs/features/FEATURE-INDEX.md`, `docs/adr/ADR-INDEX.md`,
+`docs/CI-ROADMAP.md`, and `docs/features/<NNNN-name>/{brainstorm,spec,plan-review}.md`).
+Nothing is hard-coded to this project — change the docs and the command center follows.

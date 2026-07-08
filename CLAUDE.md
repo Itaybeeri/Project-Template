@@ -5,6 +5,16 @@
 
 ## First session — fill the placeholders BEFORE any feature work
 
+**Step 0 — repoint git to THIS project's repo (do this first).** This template ships wired to
+the `project-template` GitHub remote. A copy made to start a real project must **never** keep
+that remote — otherwise the new project would push into the template. So on the first session,
+before anything else, run `git remote -v`; if `origin` still points at the `project-template`
+repository, **STOP and ask the human** whether this checkout *is* the canonical `project-template`
+(the one repo that legitimately tracks it) or a new project copied from it. If it's a new
+project, get the new repo's URL and repoint it (`git remote set-url origin <url>`), or remove
+`origin` (`git remote remove origin`) until they create the repo. Only the canonical template
+repo keeps the `project-template` remote; every derived project repoints away from it here.
+
 If this file or any `docs/` file still contains `<FILL: …>` or `<PROJECT_NAME>` markers, the
 project has **not** been initialized yet. On the first session, the agent MUST **interview the
 human one question at a time and fill every placeholder** across `CLAUDE.md` and `docs/` (name,
@@ -20,12 +30,12 @@ human whether to install them** (the `superpowers` plugin) before proceeding —
 silently and don't assume they're absent. If they're already installed, say so and move on.
 
 **Once the placeholders are filled (the project is personalized), the agent MUST tell the human
-that the project dashboard now reflects their real project and offer to open it** — run
-`node dashboard/serve.mjs` and point them at http://localhost:4317. The dashboard is a live,
+that the Project Command Center now reflects their real project and offer to open it** — run
+`node ProjectCommandCenter/serve.mjs` and point them at http://localhost:4317. It's a live,
 read-only command center that parses `CLAUDE.md` + `docs/` + git on every request, so it goes
 from generic template placeholders to the real project the moment the interview is done (see
-`dashboard/README.md`). Don't leave it un-offered — it's the fastest way for the human to see
-their initialized project at a glance.
+`ProjectCommandCenter/README.md`). Don't leave it un-offered — it's the fastest way for the
+human to see their initialized project at a glance.
 
 ## Project
 
@@ -74,10 +84,10 @@ architecture"** (read when you need it).
   deferred item's trigger now holds, surface it for the human (don't act on it).
 - **Resuming work:** `/continue [NNNN]` resumes a feature at its current phase
   (branch/worktree-aware; asks which when several are in progress).
-- **Project dashboard:** `dashboard/` — a self-contained, read-only command center. Run
-  `node dashboard/serve.mjs` (→ http://localhost:4317); it re-reads `CLAUDE.md` + `docs/` + git
-  on every request, so it always reflects the current project state. No build, no deps
-  (Node ≥ 18). Details in `dashboard/README.md`.
+- **Project Command Center:** `ProjectCommandCenter/` — a self-contained, read-only command
+  center. Run `node ProjectCommandCenter/serve.mjs` (→ http://localhost:4317); it re-reads
+  `CLAUDE.md` + `docs/` + git on every request, so it always reflects the current project
+  state. No build, no deps (Node ≥ 18). Details in `ProjectCommandCenter/README.md`.
 
 ## Numbering
 

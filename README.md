@@ -27,6 +27,12 @@ docs/
     ├── feature-lifecycle.md      # the five phases + the two AI gates
     ├── brainstorm-TEMPLATE.md
     └── feature-spec-TEMPLATE.md
+ProjectCommandCenter/             # read-only command center — parses docs/ + git, no build/deps
+├── collect.mjs                   # the parser: repo → one project-state object (source of truth)
+├── serve.mjs                     # zero-dep dev server; re-parses live on every request
+├── generate.mjs                  # writes a shareable static snapshot.html (+ data.json)
+├── index.html                    # the UI (self-contained: inline CSS/JS, no CDN)
+└── README.md                     # how it works + how to copy it
 .claude/
 ├── SKILLS.md                     # manifest: what's shipped here vs. plugin skills to install
 ├── skills/
@@ -37,6 +43,7 @@ docs/
 │   └── tester.md                 # Test phase — AC-by-AC verification in a fresh context
 └── commands/
     └── continue.md               # /continue — resume a feature at its current phase
+.gitignore                        # ignores the command center's generated data.json / snapshot.html
 ```
 
 ## The model in one paragraph
@@ -48,6 +55,24 @@ replaces the human's final yes. Architecturally significant decisions are record
 **ADRs** (immutable, append-only, superseded never edited). `docs/architecture.md` always
 reflects current reality. One feature = one branch = one PR; nothing merges until every
 acceptance criterion is verified and the gate is green.
+
+## The Project Command Center (a live dashboard)
+
+`ProjectCommandCenter/` ships a self-contained, **read-only** command center. It parses
+`CLAUDE.md`, `docs/` (feature index, each feature folder, ADR index, CI-roadmap) and git on
+**every** request and renders the whole project on one page: the delivery pipeline (every
+feature by lifecycle phase), a per-feature detail drawer (phase stepper, plan-review rounds,
+acceptance criteria, related ADRs, branch/PR state), the ADRs, the CI-roadmap, and recent git
+activity.
+
+```bash
+node ProjectCommandCenter/serve.mjs      # → http://localhost:4317  (live, 60s auto-refresh)
+node ProjectCommandCenter/generate.mjs   # → ProjectCommandCenter/snapshot.html (shareable, offline)
+```
+
+No build step and no dependencies (Node ≥ 18). It's **generic** — it degrades gracefully
+while the repo is still `<FILL:>` placeholders, then personalizes itself the moment the
+first-session interview fills in the real project. Details in `ProjectCommandCenter/README.md`.
 
 ## How to use it
 
@@ -80,6 +105,12 @@ repo and paste this:
 > just fill the template and confirm the structure with me. When the blanks are filled, we'll
 > start feature 0001.
 
+The agent first repoints git away from the `project-template` remote to **your** new repo (a
+copy must never push back into the template), then interviews you one question at a time, checks
+whether the `superpowers` plugin skills are installed (asking before it installs anything), and
+— once the placeholders are filled — offers to open the now-personalized command center
+(`node ProjectCommandCenter/serve.mjs`).
+
 (`CLAUDE.md` auto-loads each session and `.claude/` skills/agents/commands are auto-discovered,
 so you don't need to re-point the agent at them after this.)
 
@@ -101,9 +132,11 @@ so you don't need to re-point the agent at them after this.)
 
 ## What's deliberately NOT here
 
-- **A portal/UI** — building one is framework-specific. `docs/PORTAL-PATTERN.md` describes
-  the pattern (a thin backend-for-frontend that lists `docs/` and renders markdown) so you
-  can add it as a feature when you want it.
+- **A docs portal** — the shipped `ProjectCommandCenter/` is a read-only *command center*
+  (pipeline, features, ADRs, git), not a full markdown-rendering portal for browsing every
+  doc. Building that is framework-specific; `docs/PORTAL-PATTERN.md` describes the pattern (a
+  thin backend-for-frontend that lists `docs/` and renders markdown) so you can add it as a
+  feature when you want it.
 - **A language/build toolchain** — pick yours; wire the commands into `CLAUDE.md` and
-  `ONBOARDING.md`.
+  `ONBOARDING.md`. (The command center itself needs only Node ≥ 18, no install.)
 - **CI workflow files** — add `.github/workflows/` to match `CI-ROADMAP.md` scope A.
