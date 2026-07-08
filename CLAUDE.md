@@ -19,6 +19,14 @@ the lifecycle leans on are installed (see `.claude/SKILLS.md`). If any are missi
 human whether to install them** (the `superpowers` plugin) before proceeding — don't install
 silently and don't assume they're absent. If they're already installed, say so and move on.
 
+**Once the placeholders are filled (the project is personalized), the agent MUST tell the human
+that the project dashboard now reflects their real project and offer to open it** — run
+`node dashboard/serve.mjs` and point them at http://localhost:4317. The dashboard is a live,
+read-only command center that parses `CLAUDE.md` + `docs/` + git on every request, so it goes
+from generic template placeholders to the real project the moment the interview is done (see
+`dashboard/README.md`). Don't leave it un-offered — it's the fastest way for the human to see
+their initialized project at a glance.
+
 ## Project
 
 <FILL: one paragraph — what this project is, who it's for, and the deliverable.>
@@ -66,6 +74,10 @@ architecture"** (read when you need it).
   deferred item's trigger now holds, surface it for the human (don't act on it).
 - **Resuming work:** `/continue [NNNN]` resumes a feature at its current phase
   (branch/worktree-aware; asks which when several are in progress).
+- **Project dashboard:** `dashboard/` — a self-contained, read-only command center. Run
+  `node dashboard/serve.mjs` (→ http://localhost:4317); it re-reads `CLAUDE.md` + `docs/` + git
+  on every request, so it always reflects the current project state. No build, no deps
+  (Node ≥ 18). Details in `dashboard/README.md`.
 
 ## Numbering
 
