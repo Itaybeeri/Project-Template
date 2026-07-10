@@ -44,7 +44,14 @@ faults are named, not waved through.
    defect, and what must change, and raise it **before** the feature proceeds. Resolve it
    by superseding the ADR per `docs/adr/ADR-RULES.md`.
 
-5. **Produce a verdict.**
+5. **(Optional) Verify each fault with a sub-agent before reporting.** For a large design
+   or a long FAIL list, dispatch **one verifier sub-agent per candidate fault** to confirm
+   or refute it against the cited rule/ADR; keep only the faults that survive. This buries
+   the per-fault back-and-forth one level down so only confirmed faults reach the verdict —
+   the reviewer→verifier pattern. Skip it for a handful of clear faults; match ceremony to
+   weight.
+
+6. **Produce a verdict.**
    - **PASS** — all design rules satisfied; proceed to Plan.
    - **FAIL** — list each violated rule *by number*, the specific fault, and the minimal
      fix. Return to Brainstorm to resolve before Plan.
