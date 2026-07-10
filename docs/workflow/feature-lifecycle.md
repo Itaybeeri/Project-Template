@@ -125,18 +125,38 @@ pass). **No code until plan-review is PASS *and* the human gives the final appro
 - Cover the spec's acceptance criteria + edge cases.
 - Produce an **AC-by-AC traceability table** (each AC → how it's verified → evidence →
   COVERED / GAP / BLOCKED). A dedicated tester agent run in its own context is ideal.
+- **Exercise the real thing — don't stop at a green suite.** Self-verification (observing
+  the actual outcome and correcting from it) is the single highest-value practice. Drive the
+  affected flow end-to-end and *observe behavior*, not only that tests pass: frontend → open
+  it in a browser; server/API → hit the endpoint and read the response/logs; CLI → run it;
+  backend job → run it and read the output. The `/verify` and `/run` skills exist for this.
+  A passing unit test is necessary, not sufficient — an AC is COVERED only with observed
+  evidence from the behavior it describes.
+- **Scale verification with fan-out (nested sub-agents).** For a large spec, the tester can
+  dispatch **one verifier sub-agent per acceptance criterion** (or per AC group), each
+  checking its AC in isolation and returning a one-line COVERED/GAP/BLOCKED + evidence; the
+  tester merges those summaries into the traceability table. This keeps each AC's noisy
+  verification buried one level down and only the verdict surfaces. Skip the fan-out for
+  small specs — match the ceremony to the weight.
 - **Result is verified only when every AC is COVERED.** A failing test or a closeable GAP
   → back to phase 3. A **BLOCKED** required AC (needs a tool/env you lack, or CI) means the
   feature **cannot be certified here**; run it where it can run, or formally de-scope it
   with the human's written sign-off in `spec.md`.
 
-**Output:** the AC-evidence table with **zero open items**, green suite on the branch.
+**Output:** the AC-evidence table with **zero open items**, green suite on the branch, and
+observed evidence that the feature actually behaves as specified.
 
 ## 5. Review / Merge  (gate + deploy)
 
 **The PR is opened only AFTER tests pass and the branch is in sync with the default
 branch.** Follow this order exactly:
 
+0. **Adversarial self-review (before the PR).** Turn on your own diff: argue the case
+   *against* it. "Prove to me this works" — where would it break? "Knowing everything you
+   know now, is there a simpler, more elegant solution you'd write instead?" Re-derive the
+   design as if you were reviewing a stranger's code, not defending your own. Surface any
+   real doubt to the human before opening the PR rather than letting the PR discover it.
+   (The `grill-me` skill formalizes this.) This is a mindset checkpoint, not a gate verdict.
 1. **Precondition — phase 4 is green.** Every AC COVERED (no GAP/BLOCKED).
 2. **Sync with the default branch BEFORE opening the PR:**
    ```

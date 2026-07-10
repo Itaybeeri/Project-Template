@@ -70,6 +70,9 @@ architecture"** (read when you need it).
   *Current state* (what's built today).
 - **Glossary:** `docs/GLOSSARY.md` — canonical terms. Use these words exactly; update it
   when a term changes.
+- **Lessons (compounding memory):** `docs/LESSONS.md` — append-only log of project-specific
+  gotchas the agent must not repeat. **Read it at the start of feature work**, and add an
+  entry (in the same commit as the fix) whenever a correction reveals a repeatable mistake.
 - **Architecture Decision Records (ADRs):** `docs/adr/` — GLOBAL, append-only. Read
   `docs/adr/ADR-INDEX.md` first, then the relevant ADR before changing a subsystem it
   covers.
@@ -104,6 +107,11 @@ Feature and ADR numbers are SEPARATE counters. Before picking a feature number, 
 3. **Keep `docs/ONBOARDING.md` current.** Whenever a change adds or changes something a
    fresh machine needs — a new tool/dependency, a changed setup or command, new env vars —
    update `docs/ONBOARDING.md` in the same change.
+4. **Compound the lessons.** When a correction (human feedback, a broken build, a review
+   finding) reveals a *repeatable* mistake, append a `symptom → cause → rule` entry to
+   `docs/LESSONS.md` **in the same commit as the fix** — so the next session, agent, and
+   teammate inherit it and never repeat it. Don't defer it; an empty lessons log means
+   re-explaining the same thing every session.
 
 ## Workflow rules
 

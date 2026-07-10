@@ -54,7 +54,14 @@ This is a gate, not the approval. Even at zero findings, the **human** gives the
    now, naming the exact brainstorm section or ADR number, the defect, and what must
    change — **before** anything is implemented.
 
-4. **Write the findings log** to `docs/features/<NNNN-name>/plan-review.md` (append a new
+4. **(Optional) Verify each finding with a sub-agent before you report it.** For a large
+   spec or a long findings list, dispatch **one verifier sub-agent per candidate finding**:
+   give it the finding, the relevant spec/ADR excerpt, and ask it to confirm or refute that
+   the fault is real and the proposed fix is correct. Keep only the findings that survive.
+   This keeps the noisy per-finding checking one level down and lets only confirmed findings
+   reach the log — the reviewer→verifier pattern. Skip it when there are just a few obvious
+   findings; match ceremony to weight.
+5. **Write the findings log** to `docs/features/<NNNN-name>/plan-review.md` (append a new
    dated round each pass). Then **produce a verdict**.
 
 ## Verdict format
