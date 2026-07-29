@@ -103,6 +103,23 @@ on.
 
 **VERDICT: CHANGES-REQUESTED** (8 findings, 0 escalations)
 
+## Round 3 — 2026-07-29 — re-review after fixes
+
+**Axes checked:** 1..6 + upstream escalation. Re-verified each round-2 finding in the plan text:
+F9 (top-level await, `collectState()` sync, call sites untouched) · F10 (`export SCRATCH` present)
+· F11 (`(?=\n##\s|$)`, no `\Z`) · F12 (prune block with `readdirSync`/`rmSync`, both imported) ·
+F13 (empty-state steps rewritten as four commands) · F14 (`md5sum -c`, available in Git Bash) ·
+F15 (single escape on link URLs) · F16 (merge at the head of Task 4, post-merge source text
+quoted).
+
+Also re-checked type consistency end to end: `parseNotes({root}) → {notes, problems}` and the note
+field names are spelled identically in `generate.mjs`, `collectReleases()`, and the panel;
+`hrefFor(path, anchor)` matches `resolveRef`'s `{label, path, anchor}`.
+
+**FINDINGS:** none. **ESCALATIONS:** none.
+
+**VERDICT: PASS** — hand to the human for final approval. No code until that approval.
+
 ### Round 2 resolutions — 2026-07-29
 
 F9–F16 applied to the plan.
