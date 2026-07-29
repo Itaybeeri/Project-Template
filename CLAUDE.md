@@ -29,6 +29,11 @@ the lifecycle leans on are installed (see `.claude/SKILLS.md`). If any are missi
 human whether to install them** (the `superpowers` plugin) before proceeding — don't install
 silently and don't assume they're absent. If they're already installed, say so and move on.
 
+**Clear the template's own release notes on this first session too:** delete `docs/releases/0*.md`
+(they document how the *template* was built, not this project) and run
+`node ReleaseNotes/generate.mjs` so `ReleaseNotes/` reflects the new project. The first real note
+lands with this project's first merge.
+
 **Once the placeholders are filled (the project is personalized), the agent MUST tell the human
 that the Project Command Center now reflects their real project and offer to open it** — run
 `node ProjectCommandCenter/serve.mjs` and point them at http://localhost:4317. It's a live,
@@ -73,6 +78,10 @@ architecture"** (read when you need it).
 - **Lessons (compounding memory):** `docs/LESSONS.md` — append-only log of project-specific
   gotchas the agent must not repeat. **Read it at the start of feature work**, and add an
   entry (in the same commit as the fix) whenever a correction reveals a repeatable mistake.
+- **Release notes:** `docs/releases/` — one MD note per merge (readable bullets first),
+  rendered to committed HTML in `ReleaseNotes/` (an index + one page per note, linking back
+  to the feature / ADR / idea docs each note references). Written **automatically in phase 5,
+  before the PR** — never ask permission for it. See `ReleaseNotes/README.md`.
 - **Architecture Decision Records (ADRs):** `docs/adr/` — GLOBAL, append-only. Read
   `docs/adr/ADR-INDEX.md` first, then the relevant ADR before changing a subsystem it
   covers.
@@ -94,8 +103,10 @@ architecture"** (read when you need it).
 
 ## Numbering
 
-Feature and ADR numbers are SEPARATE counters. Before picking a feature number, check
-`docs/features/FEATURE-INDEX.md` (lists used + **reserved** numbers).
+Feature, ADR, idea, and release-note numbers are FOUR SEPARATE counters. Before picking a
+feature number, check `docs/features/FEATURE-INDEX.md` (lists used + **reserved** numbers);
+ideas have their own `001…` counter in `docs/IDEAS.md`; release notes have their own `0001…`
+counter in `docs/releases/`. Numbers are never reused.
 
 ## Documentation discipline
 
@@ -131,6 +142,10 @@ Router-level invariants (full rules in those two files):
   uncommitted, so nothing is forgotten.** This applies to docs/brainstorm/spec artifacts,
   not just code. Commit on the feature's `feat/<NNNN>-...` branch (branch first if on the
   default branch); don't commit feature work directly on the default branch.
+- **Every PR ships a release note — automatically, without asking.** In phase 5, after the
+  default-branch sync and before the PR is opened, write `docs/releases/NNNN-slug.md` and run
+  `node ReleaseNotes/generate.mjs`; commit both on the feature branch. **No release note, no
+  PR** — this applies to trivial fixes and docs-only changes too.
 - **Commit + push the branch after every green step** (don't batch locally).
 - **Nothing merges without a PR and a fully green gate where every acceptance criterion is
   COVERED; the Test phase + a default-branch sync happen BEFORE the PR is opened.** The
@@ -149,7 +164,8 @@ Router-level invariants (full rules in those two files):
 **Allow what is safe and undoable; keep prompting for what is destructive, outward-facing,
 or irreversible.** Reduce prompts on frequent safe commands (read-only git, the
 test/lint/typecheck tools, feature-branch push, read-only inspection) by allow-listing
-them. **Always keep prompting** for: PR merges, pushing to the default branch, force-push,
+them — including `node ReleaseNotes/generate.mjs`, which runs on every PR and must never
+prompt. **Always keep prompting** for: PR merges, pushing to the default branch, force-push,
 branch/worktree deletes, branch-protection changes, deploys, destructive deletes, and
 anything touching auth / secrets / production data / customer data.
 

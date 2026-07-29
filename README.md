@@ -23,6 +23,9 @@ docs/
 ├── features/                     # one folder per feature
 │   ├── FEATURE-INDEX.md          # the central list + reserved numbers
 │   └── FEATURE-RULES.md          # design rules + completion rules + the merge gate
+├── releases/                     # one release note per merge — bullets first
+│   ├── TEMPLATE.md               # copy this when a feature is about to open its PR
+│   └── NNNN-slug.md              # the notes themselves (own number counter)
 └── workflow/
     ├── feature-lifecycle.md      # the five phases + the two AI gates
     ├── brainstorm-TEMPLATE.md
@@ -33,6 +36,10 @@ ProjectCommandCenter/             # read-only command center — parses docs/ + 
 ├── generate.mjs                  # writes a shareable static snapshot.html (+ data.json)
 ├── index.html                    # the UI (self-contained: inline CSS/JS, no CDN)
 └── README.md                     # how it works + how to copy it
+ReleaseNotes/                     # rendered release notes — committed HTML, no build/deps
+├── parse.mjs                     # the parser: docs/releases/*.md → notes (shared w/ command center)
+├── generate.mjs                  # validates, then writes index.html + one page per note
+└── README.md                     # how to write a note + how generation works
 .claude/
 ├── SKILLS.md                     # manifest: what's shipped here vs. plugin skills to install
 ├── skills/

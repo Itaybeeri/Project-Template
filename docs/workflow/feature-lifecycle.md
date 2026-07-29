@@ -165,14 +165,27 @@ branch.** Follow this order exactly:
    ```
    (Merge, not force-push — keeps the pushed branch intact.)
 3. **Re-run the full green gate after the sync** and re-confirm the AC table is all-COVERED.
-4. **Only now open the PR.** CI runs the tests on the PR — this is the gate.
-5. **Check the CI-Roadmap** (`docs/CI-ROADMAP.md`): for each deferred item, if its trigger
+4. **Write the release note — mandatory, every PR, no approval asked.** Take the next free
+   number in `docs/releases/` (read it *after* the sync in step 2, so a note that merged
+   meanwhile is seen), copy `docs/releases/TEMPLATE.md` to `docs/releases/NNNN-slug.md`, and
+   lead with readable bullets: what changed and why, not commit subjects. Reference the work
+   with `Refs: Feature NNNN, ADR-NNNN, Idea NNN`, and list anything else under
+   `## Related docs`. Then:
+   ```
+   node ReleaseNotes/generate.mjs
+   ```
+   It validates and fails on a dead ref, a duplicate number, a missing field, or a related
+   doc that doesn't exist. **Commit the note and the regenerated HTML onto the feature
+   branch** — the note ships with the change it describes. Details: `ReleaseNotes/README.md`.
+5. **Only now open the PR.** CI runs the tests on the PR — this is the gate.
+6. **Check the CI-Roadmap** (`docs/CI-ROADMAP.md`): for each deferred item, if its trigger
    now holds, **surface it to the human** to consider. Don't act on it automatically.
-6. Review the diff (security, correctness, error handling).
-7. **Before merging, re-check the branch is still in sync** with the default branch; if it
+7. Review the diff (security, correctness, error handling).
+8. **Before merging, re-check the branch is still in sync** with the default branch; if it
    moved, repeat steps 2–3. **Merge only when green AND every AC COVERED AND up to date.**
-8. Update `docs/architecture.md` if the shape changed; set `spec.md` status to Done and the
-   FEATURE-INDEX row to Done (+ PR #).
+9. Update `docs/architecture.md` if the shape changed; set `spec.md` status to Done and the
+   FEATURE-INDEX row to Done (+ PR #). If the PR number wasn't known when the note was
+   written, add `**PR:** #N` to it now and regenerate.
 
 **Output:** merged, deployed (if applicable), state doc current.
 
