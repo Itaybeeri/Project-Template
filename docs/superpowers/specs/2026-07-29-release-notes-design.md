@@ -103,6 +103,14 @@ visible warning. An empty panel never means "something is broken."
 - `CLAUDE.md`, `docs/IDEAS.md`, `ProjectCommandCenter/collect.mjs`, …
 ```
 
+> The block above is **illustrative only** — its refs are examples and it is not shipped in
+> `docs/releases/`.
+
+**File selection.** A file in `docs/releases/` is a note when its name matches
+`^\d{4}-[a-z0-9-]+\.md$`; the number comes from the filename. `TEMPLATE.md` and `README.md` are
+ignored by name. **Any other `.md` in the folder is a hard error** naming the file — a stray
+`draft.md` fails loudly instead of being silently skipped.
+
 **Fields.** `Released` (ISO date) and `Type` are required. `Type` ∈ `Feature | Fix | Docs | Chore |
 ADR | Idea`. `PR` and `Refs` are optional (a note may precede its PR number, and a chore may
 reference nothing).
@@ -139,6 +147,18 @@ common case; the duplicate check closes the race that remains.
   fancier is out of scope — notes are short.
 - **Everything is HTML-escaped first**, then the whitelisted Markdown subset is applied. Raw HTML
   in a note is rendered as text, never as markup — the output is committed and opened in a browser.
+  Escaping covers **attribute context too** (quotes included), so a slug or a resolved path can
+  never break out of an `href`.
+
+**Link resolution** (D6) is one injectable function, not a branch at each call site:
+
+- The remote is read once from `git remote get-url origin`, overridable via the
+  `RELEASE_NOTES_REMOTE` env var — `RELEASE_NOTES_REMOTE=""` forces relative mode, so **both link
+  modes are exercisable in this repo** (which has a GitHub remote).
+- A GitHub remote (SSH or HTTPS) → `https://github.com/<owner>/<repo>/blob/<default-branch>/<path>`.
+- The default-branch name resolves **offline** from `git symbolic-ref refs/remotes/origin/HEAD`,
+  falling back to `main`. Never a network or `gh` call — that would make output vary by environment
+  and break idempotence (AC6).
 
 ## What makes it automatic
 
@@ -166,6 +186,21 @@ Wiring, all in the same change:
 Every merged PR gets exactly one note, including trivial fixes and docs-only changes (a two-bullet
 note), distinguished by `Type`.
 
+## Bootstrap
+
+The feature is introduced by the very step it introduces, so the first notes are stated
+explicitly rather than left to the rule:
+
+- **`0001-release-notes.md`** — this feature, written during its own phase 5, before its PR opens.
+  It is the proof the machinery works.
+- **`0002-ideas-notepad.md`** — backfilled for the Ideas panel (PR #3), which merges before this
+  machinery exists. It gives the index a second entry and exercises an `Idea`-typed note linking to
+  `docs/IDEAS.md`.
+- **Nothing earlier is backfilled.** The Command Center and the pre-existing docs predate the
+  convention; inventing notes for them would fabricate history.
+
+A derived project clears both on first-session init (D8).
+
 ## Acceptance criteria
 
 1. `docs/releases/` holds MD notes; `ReleaseNotes/` holds committed `index.html` + one page per note.
@@ -188,7 +223,23 @@ note), distinguished by `Type`.
 
 ## Verification
 
-No test runner exists in this repo, so verification is observed behavior, not a suite:
+No test runner exists in this repo, so verification is observed behavior, not a suite. Every AC
+declares its method:
+
+| AC | Verified how |
+|----|--------------|
+| 1 | `ls docs/releases/ ReleaseNotes/` + `git ls-files ReleaseNotes/` shows the HTML is tracked |
+| 2 | Open `ReleaseNotes/0001-release-notes.html` in a browser; bullets appear above the fold; click every related-docs link and land on real content |
+| 3 | Open `ReleaseNotes/index.html`; both notes listed newest-first; each title opens its page |
+| 4 | Default run → `grep github.com/.../blob/ ReleaseNotes/*.html`; `RELEASE_NOTES_REMOTE="" node ReleaseNotes/generate.mjs` → relative `href`s (restore afterwards) |
+| 5 | Break a ref / duplicate a number / drop a field → plain run and `--check` both exit 1 with the naming message; `git status` shows no HTML written |
+| 6 | Run twice; `git status` clean the second time |
+| 7 | `node ProjectCommandCenter/serve.mjs` with the panel populated; then with `ReleaseNotes/` moved aside (warning state) and with `docs/releases/` emptied (ordinary empty state) |
+| 8 | `grep` for the phase-5 step in `CLAUDE.md`, `feature-lifecycle.md`, `FEATURE-RULES.md`, and for **release note** in `docs/GLOSSARY.md` |
+| 9 | Both bootstrap notes exist with rendered pages (covered by AC2/AC3 walkthrough) |
+| 10 | Scratch note containing `<script>alert(1)</script>` renders as visible text; delete the scratch note |
+
+Procedures referenced above, in full:
 
 - Run the generator; open `ReleaseNotes/index.html` in a browser; click through to a note and out
   to a linked MD — confirm each lands on real content.
