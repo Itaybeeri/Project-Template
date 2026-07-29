@@ -56,6 +56,57 @@ on.
 
 **VERDICT: CHANGES-REQUESTED** (8 findings, 0 escalations)
 
+## Round 2 — 2026-07-29 — the implementation plan
+
+**Reviewing:** `docs/superpowers/plans/2026-07-29-release-notes.md` (resolves F1).
+**Axes checked:** 1..6 + upstream escalation.
+
+**PASS items**
+
+- **Axis 2 (coverage)** — the plan's self-review maps all ten ACs plus the Bootstrap and
+  clean-template sections to tasks; spot-checking AC4, AC7, and AC10 confirms each names a task
+  and a command.
+- **Axis 3 (testability)** — every task ends in a runnable command with expected output, and the
+  no-test-runner deviation is stated in Global Constraints rather than hidden.
+- **Axis 1** — the plan adds nothing outside the clean-template file list, and Task 6 removes the
+  planning docs.
+
+**FINDINGS (plan)**
+
+- **[F9] Axis 5 (consistency) — needless async ripple.** Task 5 Step 3 converts the public
+  `collectState()` to async, forcing edits at three call sites (`serve.mjs`, `generate.mjs`, the
+  debug block) for one guarded import. → `collect.mjs` is ESM: do the guarded `await import()` once
+  at module top level and keep `collectState()` synchronous. No call site changes.
+- **[F10] Axis 4 (implementability) — commands reference an unset variable.** Task 1's steps use
+  `$SCRATCH` / `process.env.SCRATCH` without ever exporting it. → Export it in the task's first
+  step.
+- **[F11] Axis 4 — the plan ships broken code.** `section()` uses `\Z`, which **JavaScript RegExp
+  does not support**; the section body would never terminate correctly. → Use
+  `(?=\n##\s|$)` with a lazy body.
+- **[F12] Axis 6 (failure modes) — stale output is never pruned.** Renaming or deleting a note
+  leaves its old `NNNN-slug.html` in `ReleaseNotes/`, unreferenced by the index but committed and
+  linkable. → The generator deletes orphaned `^\d{4}-.*\.html$` files that no current note claims.
+- **[F13] Axis 4 — garbled step.** Task 5 Step 6 contains a half-rewritten sentence ("`mkdir
+  $SCRATCH/empty` test is unnecessary — instead…"). → Rewrite as two clean sub-steps.
+- **[F14] Axis 3 — the idempotence check can't fail.** Task 3 Step 5 checks `git status` after two
+  runs, but on the first generation the files are untracked and show as `??` either way. → Hash the
+  output, regenerate, compare hashes.
+- **[F15] Axis 6 — double escaping in links.** `inline()` escapes the whole string, then applies
+  `esc(u)` again to the already-escaped URL, so `&` in a URL becomes `&amp;amp;`. → Drop the second
+  `esc(u)`.
+- **[F16] Axis 5 — edit target won't match.** Task 4 rewrites CLAUDE.md's Numbering paragraph to
+  "FOUR SEPARATE counters", but Task 4 runs **before** Task 5's `git merge origin/main`; on this
+  branch that paragraph still reads "Feature and ADR numbers are SEPARATE counters" (pre-Ideas). →
+  Move the default-branch merge to the front of Task 4 and state the post-merge source text.
+
+**ESCALATIONS:** none.
+
+**VERDICT: CHANGES-REQUESTED** (8 findings, 0 escalations)
+
+### Round 2 resolutions — 2026-07-29
+
+F9–F16 applied to the plan.
+
 ### Round 1 resolutions — 2026-07-29
 
 F2–F8 applied to the spec (bootstrap section, AC→verification table, injectable remote reader,

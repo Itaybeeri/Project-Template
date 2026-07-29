@@ -36,6 +36,7 @@
 - [ ] **Step 1: Create the fixture tree that the parser must satisfy**
 
 ```bash
+export SCRATCH="C:/Users/Itay/AppData/Local/Temp/claude/F--Development-project-template/17474613-bbc8-40a3-96f0-3ed579e0304c/scratchpad"
 mkdir -p "$SCRATCH/fixtures/docs/releases" "$SCRATCH/fixtures/docs/features/0002-demo" "$SCRATCH/fixtures/docs/adr"
 printf '# demo spec\n' > "$SCRATCH/fixtures/docs/features/0002-demo/spec.md"
 printf '# ADR-0001 demo\n' > "$SCRATCH/fixtures/docs/adr/ADR-0001-demo.md"
@@ -158,9 +159,10 @@ function readMeta(md) {
   return out;
 }
 
-/** Body of a `## <heading>` section, up to the next `##`. */
+/** Body of a `## <heading>` section, up to the next `##` (or end of file). */
 function section(md, heading) {
-  const re = new RegExp(`^##\\s+${heading}\\s*$([\\s\\S]*?)(?=^##\\s|\\Z)`, 'mi');
+  // NB: JS RegExp has no \Z — terminate on the next heading or the end of input.
+  const re = new RegExp(`^##\\s+${heading}\\s*$([\\s\\S]*?)(?=\\n##\\s|$)`, 'mi');
   return re.exec(md)?.[1] || '';
 }
 
@@ -263,7 +265,7 @@ Expected before implementation: FAIL — `Cannot find module ... generate.mjs`.
  * Output is deterministic: no timestamps, no network, so re-running is a no-op.
  */
 import { execFileSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseNotes, REPO_ROOT } from './parse.mjs';
@@ -321,7 +323,8 @@ function inline(md) {
   let h = esc(md);
   h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
   h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  h = h.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, t, u) => `<a href="${esc(u)}">${t}</a>`);
+  // `u` is already escaped by the esc() above — escaping it again would double-encode &.
+  h = h.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, t, u) => `<a href="${u}">${t}</a>`);
   return h;
 }
 
@@ -398,8 +401,15 @@ if (CHECK_ONLY) {
 }
 
 writeFileSync(join(HERE, 'index.html'), indexPage(notes));
+const current = new Set(notes.map((n) => `${n.num}-${n.slug}.html`));
 for (const n of notes) writeFileSync(join(HERE, `${n.num}-${n.slug}.html`), notePage(n));
-console.log(`Wrote index.html + ${notes.length} note page(s).`);
+
+// Prune orphans: a renamed or deleted note must not leave a stale committed page
+// that the index no longer links but that is still reachable by URL.
+const orphans = readdirSync(HERE).filter((f) => /^\d{4}-.*\.html$/.test(f) && !current.has(f));
+for (const f of orphans) rmSync(join(HERE, f));
+
+console.log(`Wrote index.html + ${notes.length} note page(s).${orphans.length ? ` Pruned ${orphans.length} stale page(s).` : ''}`);
 ```
 
 - [ ] **Step 3: Verify it fails cleanly with no notes folder content yet**
@@ -542,11 +552,13 @@ node ReleaseNotes/generate.mjs
 Expected: `Wrote index.html + 2 note page(s).`
 
 ```bash
+md5sum ReleaseNotes/*.html > "$SCRATCH/before.txt"
 node ReleaseNotes/generate.mjs
-git status --short ReleaseNotes/
+md5sum -c "$SCRATCH/before.txt"
 ```
 
-Expected: identical message, and `git status` shows no change on the second run (AC6 — idempotent).
+Expected: every file reports `OK` — the output is byte-identical across runs (AC6). Hashing, not
+`git status`: freshly generated files are untracked and would show as `??` either way.
 
 - [ ] **Step 6: Commit**
 
@@ -558,6 +570,18 @@ git commit -m "feat(releases): bootstrap notes 0001 and 0002 with rendered HTML"
 ---
 
 ### Task 4: Wire the lifecycle — the "automatic" part
+
+**Prerequisite:** PR #3 (Ideas panel) is merged, then on this branch:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+This must happen **before** the CLAUDE.md edits below: pre-merge, the Numbering paragraph reads
+"Feature and ADR numbers are SEPARATE counters"; post-merge it reads "Feature, ADR, and idea
+numbers are THREE SEPARATE counters", which is the text Step 3 replaces. Editing first would
+guarantee a merge conflict in the paragraph this task rewrites.
 
 **Files:**
 - Modify: `docs/workflow/feature-lifecycle.md` (phase 5 step list), `docs/features/FEATURE-RULES.md` (merge gate), `CLAUDE.md` (4 places), `docs/GLOSSARY.md`, `README.md`
@@ -656,7 +680,7 @@ git commit -m "docs(releases): make the release note a mandatory phase-5 step an
 
 ### Task 5: Command Center — Releases panel
 
-**Prerequisite:** PR #3 (Ideas panel) is merged, then `git fetch origin && git merge origin/main` on this branch. The Ideas panel is the pattern this task mirrors; do not start before the merge or you will write the panel twice.
+**Prerequisite:** the default-branch merge done at the start of Task 4. The Ideas panel is the pattern this task mirrors, so it must already be present in `collect.mjs`/`index.html`; do not start before the merge or you will write the panel twice.
 
 **Files:**
 - Modify: `ProjectCommandCenter/collect.mjs` (add `collectReleases()` + two state keys), `ProjectCommandCenter/index.html` (NAV entry, view section, panel, drawer), `ProjectCommandCenter/README.md` (one bullet)
@@ -665,14 +689,14 @@ git commit -m "docs(releases): make the release note a mandatory phase-5 step an
 - Consumes: `parseNotes({ root })` from Task 1, via guarded dynamic import.
 - Produces: state keys `releases: Note[]` and `releasesStatus: 'ok' | 'unavailable'` (+ `releasesError: string|null`), rendered by `index.html`.
 
-- [ ] **Step 1: Sync with the merged default branch**
+- [ ] **Step 1: Confirm the Ideas panel is present to mirror**
 
 ```bash
-git fetch origin
-git merge origin/main
+grep -n "id: 'ideas'" ProjectCommandCenter/index.html
+grep -n "collectIdeas" ProjectCommandCenter/collect.mjs
 ```
 
-Expected: clean merge (this branch has not touched `collect.mjs`/`index.html` yet).
+Expected: a hit in each. If either is missing, the Task 4 merge did not happen — stop and do it.
 
 - [ ] **Step 2: Add the collector to `collect.mjs`, above `collectState()`**
 
@@ -683,9 +707,21 @@ Expected: clean merge (this branch has not touched `collect.mjs`/`index.html` ye
  * not copied along; 'unavailable' is reported distinctly from "no notes yet", so
  * an empty panel never hides a broken install.
  */
-async function collectReleases() {
+// Top-level await keeps collectState() synchronous — no async ripple into
+// serve.mjs, generate.mjs, or the debug block.
+let parseNotes = null;
+let parserError = null;
+try {
+  ({ parseNotes } = await import('../ReleaseNotes/parse.mjs'));
+} catch (err) {
+  parserError = String(err?.message || err);
+}
+
+function collectReleases() {
+  if (!parseNotes) {
+    return { releases: [], releasesStatus: 'unavailable', releasesError: parserError };
+  }
   try {
-    const { parseNotes } = await import('../ReleaseNotes/parse.mjs');
     const { notes, problems } = parseNotes({ root: REPO_ROOT });
     return {
       releases: notes,
@@ -693,17 +729,17 @@ async function collectReleases() {
       releasesError: problems.length ? problems.map((p) => `${p.file}: ${p.message}`).join('; ') : null,
     };
   } catch (err) {
-    return { releases: [], releasesStatus: 'unavailable', releasesError: String(err.message || err) };
+    return { releases: [], releasesStatus: 'unavailable', releasesError: String(err?.message || err) };
   }
 }
 ```
 
-- [ ] **Step 3: Make `collectState()` async and merge the keys in**
+- [ ] **Step 3: Merge the keys into `collectState()` — signature unchanged**
 
-`export function collectState()` becomes `export async function collectState()`; inside, add
-`const rel = await collectReleases();` next to the other collectors, spread `...rel` into the
-returned object, and add `releases: rel.releases.length` to `stats`. Update the three call sites —
-`serve.mjs`, `generate.mjs`, and the `node collect.mjs` debug block at the bottom — to `await` it.
+Inside `collectState()`, add `const rel = collectReleases();` beside the other collectors, spread
+`...rel` into the returned object, and add `releases: rel.releases.length` to `stats`.
+`collectState()` **stays synchronous**, so `serve.mjs`, `generate.mjs`, and the debug block at the
+bottom of `collect.mjs` need no changes.
 
 - [ ] **Step 4: Verify the state**
 
@@ -734,9 +770,19 @@ if (!s.releases.length)
 node ProjectCommandCenter/serve.mjs
 ```
 
-Open http://localhost:4317 → Releases: two cards, click one, drawer shows the note body.
-Then `mv ReleaseNotes ../rn-aside && ` reload → the warning empty state; `mv ../rn-aside ReleaseNotes` to restore.
-Then `mkdir $SCRATCH/empty` test is unnecessary — instead temporarily `mv docs/releases ../rel-aside`, reload → the ordinary empty state; restore (AC7).
+Open http://localhost:4317 → **Releases**: two cards; click one and the drawer shows the note body.
+
+Then the two empty states, one at a time (AC7):
+
+```bash
+mv ReleaseNotes ../rn-aside          # parser gone -> reload -> WARNING empty state
+mv ../rn-aside ReleaseNotes          # restore
+mv docs/releases ../rel-aside        # no notes  -> reload -> ORDINARY empty state
+mv ../rel-aside docs/releases        # restore
+```
+
+Expected: the two states are visibly different, and the Command Center serves without error in
+both. Restore both before continuing; confirm with `git status --short` showing a clean tree.
 
 - [ ] **Step 7: Add one bullet to `ProjectCommandCenter/README.md`** in the feature list:
 
