@@ -487,7 +487,11 @@ ignored by the parser.
 
 Note: no `PR:` line yet — it is filled in Task 6, once the PR number exists.
 
-- [ ] **Step 3: Write `docs/releases/0002-ideas-notepad.md`**
+- [ ] **Step 3: Write `docs/releases/0002-ideas-notepad.md` — DEFERRED to Task 4**
+
+`docs/IDEAS.md` does not exist until the default-branch merge at the head of Task 4, and the
+generator correctly rejects a related-doc path that isn't there. Write this note immediately after
+that merge, then regenerate. Content:
 
 ```markdown
 # 0002 — Ideas & thoughts notepad

@@ -71,6 +71,22 @@ function parseOne({ num, slug, file, md, root, problems }) {
     related.push(...hits);
   }
 
+  // A `## Related docs` section may list further docs by hand — `[label](path)`,
+  // `path`, or `` `path` `` — for anything the Refs grammar doesn't name. These are
+  // held to the same standard: a path that doesn't exist is a hard error.
+  for (const line of bulletsOf(section(md, 'Related docs'))) {
+    const link = manualLink(line);
+    if (!link) {
+      problems.push({ file, message: `related-docs entry "${line}" is not a repo path or [label](path)` });
+      continue;
+    }
+    if (!existsSync(join(root, link.path))) {
+      problems.push({ file, message: `related doc "${link.path}" does not exist` });
+      continue;
+    }
+    related.push(link);
+  }
+
   return {
     num,
     slug,
@@ -108,6 +124,17 @@ function bulletsOf(block) {
     .split('\n')
     .map((l) => /^[-*]\s+(.+)$/.exec(l.trim())?.[1])
     .filter(Boolean);
+}
+
+/** One `## Related docs` bullet → `{label, path, anchor}`, or null if it isn't a doc link. */
+function manualLink(text) {
+  const t = text.trim();
+  const md = /^\[([^\]]+)\]\(([^)\s]+)\)$/.exec(t);
+  const raw = md ? md[2] : t.replace(/^`|`$/g, '');
+  const cleaned = raw.replace(/^\.\//, '');
+  if (!/^[\w./-]+\.md(#[\w-]+)?$/i.test(cleaned)) return null;
+  const [path, anchor] = cleaned.split('#');
+  return { label: md ? md[1] : path, path, anchor: anchor || null };
 }
 
 /**

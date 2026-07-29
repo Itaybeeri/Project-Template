@@ -138,6 +138,13 @@ reference nothing).
 | `ADR-NNNN` | `docs/adr/ADR-NNNN-*.md` |
 | `Idea NNN` | `docs/IDEAS.md` anchored at the `### NNN —` memo |
 
+**Hand-listed related docs.** A `## Related docs` section may list further docs the `Refs` grammar
+doesn't name — `[label](path)`, `path`, or `` `path` ``, repo-relative, optionally with `#anchor`.
+They render alongside resolved refs and are held to the same standard: **a path that doesn't exist
+is a hard error.** (Discovered during implementation: on the template itself no `Refs` can resolve
+— there are no feature folders and no real ADRs — so without this the linking capability would
+ship undemonstrated.)
+
 **Hard errors** (every run, not just `--check`; the generator writes nothing and exits 1):
 
 | Error | Message names |
@@ -209,8 +216,10 @@ explicitly rather than left to the rule:
 - **`0001-release-notes.md`** — this feature, written during its own phase 5, before its PR opens.
   It is the proof the machinery works.
 - **`0002-ideas-notepad.md`** — backfilled for the Ideas panel (PR #3), which merges before this
-  machinery exists. It gives the index a second entry and exercises an `Idea`-typed note linking to
-  `docs/IDEAS.md`.
+  machinery exists. It gives the index a second entry and exercises a note linking to
+  `docs/IDEAS.md`. **Written after the default-branch merge**, not before: `docs/IDEAS.md` does not
+  exist on this branch until PR #3 lands, and the generator correctly refuses to link to a file
+  that isn't there.
 - **Nothing earlier is backfilled.** The Command Center and the pre-existing docs predate the
   convention; inventing notes for them would fabricate history.
 
