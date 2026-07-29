@@ -161,8 +161,9 @@ function readMeta(md) {
 
 /** Body of a `## <heading>` section, up to the next `##` (or end of file). */
 function section(md, heading) {
-  // NB: JS RegExp has no \Z — terminate on the next heading or the end of input.
-  const re = new RegExp(`^##\\s+${heading}\\s*$([\\s\\S]*?)(?=\\n##\\s|$)`, 'mi');
+  // NB: JS RegExp has no \Z, and a bare `$` under /m matches every line end — which
+  // would let the lazy body match nothing. `$(?![\s\S])` is true end-of-input only.
+  const re = new RegExp(`^##\\s+${heading}\\s*$([\\s\\S]*?)(?=\\n##\\s|$(?![\\s\\S]))`, 'mi');
   return re.exec(md)?.[1] || '';
 }
 
