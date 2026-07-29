@@ -30,6 +30,24 @@ Every merge produces a release note automatically — no approval asked — that
 | D7 | The Project Command Center gains a **Releases** panel | The command center stays the one place showing the whole project; the standalone HTML remains the shareable artifact. |
 | D8 | The template dogfoods: real notes for this repo's own merges live in `docs/releases/` | The feature is visible working immediately. First-session init tells a derived project to clear them and regenerate. |
 | D9 | This feature's own planning docs stay out of the shipped tree | The template has never recorded its own features (`FEATURE-INDEX.md` is still a `<FILL>` row). This design doc lives in `docs/superpowers/specs/`; no feature folder, no index row. |
+| D10 | The generator validates on **every** run, not only under `--check` | The automatic phase-5 step runs the plain generator; validating only under a flag would let it write and commit dead links. `--check` becomes validate-only (no writes). |
+| D11 | Duplicate note numbers are a hard error | Parallel features in worktrees can each claim the same next number; nothing else would catch the collision after both merge. |
+| D12 | The Command Center distinguishes "no notes" from "parser unavailable" | A guarded import that renders an identical empty panel in both cases is silent degradation (Design rule 7). |
+| D13 | Note content is HTML-escaped by default | The renderer writes committed HTML that is opened in a browser. Source is repo-authored, so risk is low, but escaping costs nothing. |
+
+### Human overrides of architect-review findings
+
+The architect review (2026-07-29) returned **FAIL** with six items. Four are resolved above
+(D10–D13) plus the glossary half of Rule 6 (below). Two were **overruled by the human**, on the
+record:
+
+- **Rule 1 — no ADR.** The review held that changing the merge gate, adding a fourth counter, and
+  committing generated artifacts (reversing the `.gitignore` convention) is architecturally
+  significant and warrants an ADR. **Decision: spec only, no ADR.** The reasoning lives here in
+  the decision table instead.
+- **Rule 6 — plain `0001` numbering.** The review proposed an `RN-0001` prefix so a bare number is
+  unambiguous across the feature / ADR / idea / note counters. **Decision: keep plain `0001`,**
+  matching feature-folder style.
 
 ## Architecture
 
@@ -51,14 +69,16 @@ ReleaseNotes/NNNN-slug.html
 
 | Unit | Does | Depends on |
 |------|------|-----------|
-| `ReleaseNotes/parse.mjs` | Reads `docs/releases/*.md` → array of note objects. Resolves `Refs` to real file paths; reports unresolvable refs. | `fs`, repo layout |
-| `ReleaseNotes/generate.mjs` | Renders `index.html` + one page per note. `--check` validates without writing. | `parse.mjs`, `git remote` |
+| `ReleaseNotes/parse.mjs` | Reads `docs/releases/*.md` → array of note objects. Resolves `Refs` to real file paths; returns unresolvable refs and duplicate numbers as structured problems. | `fs`, repo layout |
+| `ReleaseNotes/generate.mjs` | Validates, then renders `index.html` + one page per note. Validation runs on **every** invocation; `--check` validates without writing. Any problem → message naming note + cause, exit 1, nothing written. | `parse.mjs`, `git remote` |
 | `ProjectCommandCenter/collect.mjs` | Adds a `releases` key to the project-state object via a guarded dynamic import of `parse.mjs`. | `parse.mjs` (optional) |
 | `ProjectCommandCenter/index.html` | Renders the Releases panel + drawer. | state object |
 
-`collect.mjs` imports `parse.mjs` inside `try/catch`; if `ReleaseNotes/` is absent the state gets
-an empty `releases` array. This preserves the Command Center's copy-the-folder portability and its
-degrade-gracefully behavior.
+`collect.mjs` imports `parse.mjs` inside `try/catch`, so the Command Center keeps its
+copy-the-folder portability. The state distinguishes the two empty cases — `releases: []` with
+`releasesStatus: "ok"` (no notes yet) versus `releasesStatus: "unavailable"` plus the error text
+(parser missing or throwing). The panel renders them differently: an ordinary empty state versus a
+visible warning. An empty panel never means "something is broken."
 
 ## The note format
 
@@ -95,8 +115,17 @@ reference nothing).
 | `ADR-NNNN` | `docs/adr/ADR-NNNN-*.md` |
 | `Idea NNN` | `docs/IDEAS.md` anchored at the `### NNN —` memo |
 
-A ref that resolves to nothing is a **hard error**: `generate.mjs --check` prints the offending
-note and ref and exits non-zero. Notes cannot rot into dead links.
+**Hard errors** (every run, not just `--check`; the generator writes nothing and exits 1):
+
+| Error | Message names |
+|-------|---------------|
+| A ref resolves to no file | the note and the offending ref |
+| Two notes claim the same number | both filenames |
+| A required field (`Released`, `Type`) is missing or malformed | the note and the field |
+
+Notes therefore cannot rot into dead links, and two parallel feature branches cannot both merge a
+`0004`. The phase-5 step picks a note number **after** the default-branch sync, which closes the
+common case; the duplicate check closes the race that remains.
 
 ## The HTML
 
@@ -108,18 +137,25 @@ note and ref and exits non-zero. Notes cannot rot into dead links.
   `ProjectCommandCenter/index.html`.
 - Minimal Markdown support in the renderer: headings, lists, inline code, bold, links. Anything
   fancier is out of scope — notes are short.
+- **Everything is HTML-escaped first**, then the whitelisted Markdown subset is applied. Raw HTML
+  in a note is rendered as text, never as markup — the output is committed and opened in a browser.
 
 ## What makes it automatic
 
 Phase 5 (Review/Merge) gains a **mandatory, no-approval-asked** step, ordered after the green gate
 and the default-branch sync and **before the PR is opened**:
 
-> Write `docs/releases/NNNN-slug.md`, run `node ReleaseNotes/generate.mjs`, commit both onto the
+> Take the next free note number (read **after** the sync, so a note that merged meanwhile is
+> seen), write `docs/releases/NNNN-slug.md`, run `node ReleaseNotes/generate.mjs` — which
+> validates and fails the step on any bad ref or duplicate number — and commit both onto the
 > feature branch.
 
 Wiring, all in the same change:
 
 - `docs/workflow/feature-lifecycle.md` — the new phase-5 step, in order.
+- `docs/GLOSSARY.md` — **release note** defined as the canonical term: the MD memo in
+  `docs/releases/` is the release note; `ReleaseNotes/` is its rendered output. One concept, one
+  word (Design rule 6).
 - `docs/features/FEATURE-RULES.md` — merge-gate line: **no release note → no PR**.
 - `CLAUDE.md` — a "Where things live" entry; the fourth counter under Numbering; a workflow
   invariant; `node ReleaseNotes/generate.mjs` allow-listed under Permission prompts so it never
@@ -136,14 +172,19 @@ note), distinguished by `Type`.
 2. A note's HTML page leads with its bullets and links to every MD its `Refs` resolve to.
 3. `index.html` lists every note, newest first, each linking to its own page.
 4. Links are GitHub blob URLs when `origin` is a GitHub remote, relative paths otherwise.
-5. `node ReleaseNotes/generate.mjs --check` exits non-zero on an unresolvable ref, naming note and ref.
+5. An unresolvable ref, a duplicate note number, or a missing required field makes **both**
+   `generate.mjs` and `generate.mjs --check` exit non-zero with a message naming the note and the
+   cause — and a failing plain run writes no HTML.
 6. `node ReleaseNotes/generate.mjs` is idempotent — running it twice with no doc changes leaves the
    HTML byte-identical (no timestamps in output).
-7. The Command Center shows a Releases panel with a memo drawer, and still renders with
-   `ReleaseNotes/` deleted.
+7. The Command Center shows a Releases panel with a memo drawer; with `ReleaseNotes/` deleted it
+   still renders, and the panel shows a visible "parser unavailable" warning — distinct from the
+   ordinary "no releases yet" empty state.
 8. `CLAUDE.md`, `feature-lifecycle.md`, and `FEATURE-RULES.md` state the automatic phase-5 step and
-   the merge gate.
+   the merge gate; `docs/GLOSSARY.md` defines **release note**.
 9. The repo contains at least one real note (dogfooding) and its rendered HTML.
+10. A note whose body contains raw HTML (e.g. `<script>`) renders as visible text in the output,
+    not as markup.
 
 ## Verification
 
@@ -151,9 +192,15 @@ No test runner exists in this repo, so verification is observed behavior, not a 
 
 - Run the generator; open `ReleaseNotes/index.html` in a browser; click through to a note and out
   to a linked MD — confirm each lands on real content.
-- Break a ref deliberately; confirm `--check` exits non-zero with a useful message; restore it.
+- Break a ref deliberately; confirm **both** the plain run and `--check` exit non-zero with a
+  useful message and that the plain run left the HTML untouched; restore it (AC5).
+- Copy a note to a second file with the same number; confirm the duplicate-number error names both
+  files; delete it (AC5).
 - Run the generator twice; confirm `git status` is clean the second time (AC6).
-- Delete `ReleaseNotes/` in a scratch copy; confirm the Command Center still serves (AC7).
+- Delete `ReleaseNotes/` in a scratch copy; confirm the Command Center still serves and the panel
+  shows the "parser unavailable" warning, then confirm an empty `docs/releases/` shows the ordinary
+  empty state instead (AC7).
+- Put `<script>alert(1)</script>` in a scratch note; confirm it renders as visible text (AC10).
 
 ## Out of scope
 
