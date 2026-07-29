@@ -29,7 +29,7 @@ Every merge produces a release note automatically — no approval asked — that
 | D6 | Links resolve to GitHub blob URLs when `origin` is a GitHub remote; relative paths otherwise | `file://` links to `.md` download rather than render in Chrome. Falls back correctly for an un-repointed template or a repo with no remote. |
 | D7 | The Project Command Center gains a **Releases** panel | The command center stays the one place showing the whole project; the standalone HTML remains the shareable artifact. |
 | D8 | The template dogfoods: real notes for this repo's own merges live in `docs/releases/` | The feature is visible working immediately. First-session init tells a derived project to clear them and regenerate. |
-| D9 | This feature's own planning docs stay out of the shipped tree | The template has never recorded its own features (`FEATURE-INDEX.md` is still a `<FILL>` row). This design doc lives in `docs/superpowers/specs/`; no feature folder, no index row. |
+| D9 | This feature's own planning docs stay out of the shipped tree | The template has never recorded its own features (`FEATURE-INDEX.md` is still a `<FILL>` row). This design doc and its plan-review log live in `docs/superpowers/specs/` **only while the branch is being built, and are deleted in the final commit before the PR** — they never reach the merged template. No feature folder, no index row, no ADR. |
 | D10 | The generator validates on **every** run, not only under `--check` | The automatic phase-5 step runs the plain generator; validating only under a flag would let it write and commit dead links. `--check` becomes validate-only (no writes). |
 | D11 | Duplicate note numbers are a hard error | Parallel features in worktrees can each claim the same next number; nothing else would catch the collision after both merge. |
 | D12 | The Command Center distinguishes "no notes" from "parser unavailable" | A guarded import that renders an identical empty panel in both cases is silent degradation (Design rule 7). |
@@ -48,6 +48,21 @@ record:
 - **Rule 6 — plain `0001` numbering.** The review proposed an `RN-0001` prefix so a bare number is
   unambiguous across the feature / ADR / idea / note counters. **Decision: keep plain `0001`,**
   matching feature-folder style.
+
+## Clean-template constraint
+
+The template must stay clean: this feature adds **only** its own machinery plus wiring lines in
+files that already exist. Exhaustively, the merged diff is —
+
+**New files:** `ReleaseNotes/{parse.mjs,generate.mjs,README.md}`, `ReleaseNotes/index.html`,
+`ReleaseNotes/0001-*.html`, `ReleaseNotes/0002-*.html`, `docs/releases/{TEMPLATE.md,0001-*.md,0002-*.md}`.
+
+**Edited (lines added, nothing restructured):** `CLAUDE.md`, `docs/workflow/feature-lifecycle.md`,
+`docs/features/FEATURE-RULES.md`, `docs/GLOSSARY.md`, `README.md`,
+`ProjectCommandCenter/{collect.mjs,index.html,README.md}`, `.gitignore`.
+
+**Explicitly NOT added:** no ADR, no `docs/features/<NNNN>/` folder, no `FEATURE-INDEX.md` or
+`ADR-INDEX.md` row, no planning docs (D9), no new dependency, no config file, no CI workflow.
 
 ## Architecture
 
