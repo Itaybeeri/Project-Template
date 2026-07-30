@@ -33,5 +33,12 @@ commit subjects — and reference related work with `Refs: Feature NNNN, ADR-NNN
 ref resolves to the real MD files and is linked from the note's page; a ref that resolves to
 nothing fails the build. See `docs/workflow/feature-lifecycle.md`, phase 5.
 
+**Any repo path you write in backticks becomes a link** — in `## Files touched`, in the bullets,
+anywhere. `` `CLAUDE.md` `` renders as a link to the real file. Three deliberate exceptions stay
+plain text: something with spaces (`` `node ReleaseNotes/generate.mjs` `` is a command, not a
+path), a path that no longer exists (deleted or renamed by that very change — a link would 404),
+and anything containing `..`. So you write paths naturally and they resolve, without a dead link
+ever being generated.
+
 Links point at GitHub blob URLs when `origin` is a GitHub remote and at repo-relative paths
 otherwise. `RELEASE_NOTES_REMOTE=""` forces relative mode.
