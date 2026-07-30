@@ -25,6 +25,13 @@ code{background:#1a1f2b;padding:1px 5px;border-radius:4px;font-size:13px}
     <div class="meta">One note per merge · newest first · generated from <code>docs/releases/</code></div>
     
     <div class="row">
+      <span class="num">0005</span>
+      <span>
+        <a class="ttl" href="0005-generated-eol.html">Regenerating release notes no longer dirties the repo</a>
+        <div class="sum">2026-07-30 · Fix — Running `node ReleaseNotes/generate.mjs` on Windows reported five modified files that contained no actual changes. The generator writes LF; a checkout with `core.autocrlf=true` converts the committed HTML to CRLF, so every run looked like a change.</div>
+      </span>
+    </div>
+    <div class="row">
       <span class="num">0004</span>
       <span>
         <a class="ttl" href="0004-file-links.html">Every file path in a note is a link</a>
