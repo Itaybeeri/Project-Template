@@ -22,7 +22,7 @@ code{background:#1a1f2b;padding:1px 5px;border-radius:4px;font-size:13px}
 <body><main>
     <a class="back" href="index.html">← All release notes</a>
     <h1>0001 — Automatic release notes</h1>
-    <div class="meta">2026-07-29 · <span class="tag">Feature</span></div>
+    <div class="meta">2026-07-30 · <span class="tag">Feature</span> · PR #4</div>
     <h2>What changed</h2>
     <ul><li>Every merge now ships a release note: an MD memo in <code>docs/releases/</code>, written on the feature branch before the PR opens, so it lands with the change it describes.</li><li><code>ReleaseNotes/</code> renders those memos to HTML — an index of every note plus one page per note, linking back to the feature, ADR, and idea docs each note references.</li><li>The generator validates on every run: a dead ref, a duplicate note number, or a missing field fails the command and writes nothing, so notes cannot rot into broken links.</li><li>The Project Command Center gained a Releases panel, so the newest notes show up where the rest of the project state already does.</li></ul>
     <h2>Related docs</h2><ul><li><a href="https://github.com/Itaybeeri/Project-Template/blob/main/docs/workflow/feature-lifecycle.md">How a release note gets written (phase 5)</a></li><li><a href="https://github.com/Itaybeeri/Project-Template/blob/main/docs/features/FEATURE-RULES.md">The merge gate that requires one</a></li><li><a href="https://github.com/Itaybeeri/Project-Template/blob/main/ReleaseNotes/README.md">Writing and generating notes</a></li><li><a href="https://github.com/Itaybeeri/Project-Template/blob/main/docs/GLOSSARY.md">Release note — the term</a></li></ul>

@@ -1,6 +1,6 @@
 # 0001 — Automatic release notes
 
-**Released:** 2026-07-29 · **Type:** Feature
+**Released:** 2026-07-30 · **PR:** #4 · **Type:** Feature
 
 ## What changed
 
