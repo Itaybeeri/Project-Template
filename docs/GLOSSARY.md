@@ -13,6 +13,9 @@ in the same change that introduces or renames a term (FEATURE-RULES design rule 
 - **Architect review** — the AI gate after Brainstorm (design soundness).
 - **Plan review** — the AI gate after Plan (spec correctness/completeness).
 - **Merge gate** — the completion bar: every acceptance criterion COVERED + green CI.
+- **Release note** — the MD memo in `docs/releases/NNNN-slug.md` describing one merge in
+  readable bullets, written in phase 5 before the PR opens. `ReleaseNotes/` is its rendered
+  HTML output, not a second source of truth.
 
 ## Domain terms
 

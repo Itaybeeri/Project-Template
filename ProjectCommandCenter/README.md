@@ -13,6 +13,8 @@ A self-contained **command center** for the project: it reads the repo's own doc
 - **CI-roadmap** — deferred work and the trigger that revives each item.
 - **Ideas & thoughts** — the `docs/IDEAS.md` notepad, one card per idea with its status; click
   an idea to read its full memo in a drawer.
+- **Release notes** — the `docs/releases/` notes, newest first; click one to read its bullets,
+  related docs, and files touched in a drawer. Rendered HTML lives in `ReleaseNotes/`.
 - **Recent git activity** and contributors.
 
 It is **generic**: it parses whatever a project has and degrades gracefully when the repo is

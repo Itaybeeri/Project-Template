@@ -504,6 +504,42 @@ function summarizeContributors(raw) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// release notes (docs/releases/ — parsed by ReleaseNotes/parse.mjs)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The release-note parser lives in ReleaseNotes/ and is shared with its generator,
+ * so there is exactly one parser. The import is guarded because this folder is
+ * copied into projects on its own: a missing ReleaseNotes/ must not break the
+ * command center. Top-level await keeps `collectState()` synchronous.
+ */
+let parseNotes = null;
+let parserError = null;
+try {
+  ({ parseNotes } = await import('../ReleaseNotes/parse.mjs'));
+} catch (err) {
+  parserError = String(err?.message || err);
+}
+
+/**
+ * Reports 'unavailable' distinctly from an empty list: an empty Releases panel
+ * must mean "no notes yet", never "the parser is broken".
+ */
+function collectReleases() {
+  if (!parseNotes) return { releases: [], releasesStatus: 'unavailable', releasesError: parserError };
+  try {
+    const { notes, problems } = parseNotes({ root: REPO_ROOT });
+    return {
+      releases: notes,
+      releasesStatus: problems.length ? 'problems' : 'ok',
+      releasesError: problems.length ? problems.map((p) => `${p.file}: ${p.message}`).join('; ') : null,
+    };
+  } catch (err) {
+    return { releases: [], releasesStatus: 'unavailable', releasesError: String(err?.message || err) };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // public entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -518,6 +554,7 @@ export function collectState() {
   const adrs = collectAdrs();
   const ciRoadmap = collectCiRoadmap();
   const ideas = collectIdeas();
+  const rel = collectReleases();
 
   const byStatus = {};
   const byColumn = {};
@@ -538,6 +575,7 @@ export function collectState() {
     adrs,
     ciRoadmap,
     ideas,
+    ...rel,
     git: gitState,
     stats: {
       totalFeatures: features.length,
@@ -549,6 +587,7 @@ export function collectState() {
       adrs: adrs.length,
       ideas: ideas.length,
       openIdeas: ideas.filter((i) => !/graduated|dropped/i.test(i.status)).length,
+      releases: rel.releases.length,
       openCiItems: ciRoadmap.filter((i) => /defer/i.test(i.status)).length,
       totalAcceptanceCriteria: totalAcs,
     },

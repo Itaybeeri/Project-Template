@@ -1,3 +1,6 @@
 # Project Command Center generated artifacts (regenerated from docs/ + git on demand)
 ProjectCommandCenter/data.json
 ProjectCommandCenter/snapshot.html
+
+# Feature worktrees (one per feature branch — see docs/workflow/feature-lifecycle.md)
+.worktrees/
