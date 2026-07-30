@@ -8,7 +8,7 @@
 
 ## Files touched
 
-- `<path>`
+- `<path>` — paths in backticks are linked to the real file automatically
 
 <!--
 Copy this file to docs/releases/NNNN-slug.md (lowercase slug) when a feature is about to open

@@ -10,7 +10,7 @@
  *   node ReleaseNotes/generate.mjs --check    validate only, write nothing
  */
 import { execFileSync } from 'node:child_process';
-import { readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseNotes, REPO_ROOT } from './parse.mjs';
@@ -80,13 +80,40 @@ function hrefFor(path, anchor) {
 // ─────────────────────────────────────────────────────────────────────────────
 // markdown subset — escape first, then whitelist
 // ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Is this the path of a file that actually exists in the repo? Used to turn a
+ * `backticked path` into a link. Rejects anything with spaces (a command, not a
+ * path) and anything trying to climb out of the repo.
+ */
+function isRepoFile(p) {
+  if (!/^[\w][\w./-]*$/.test(p) || p.includes('..')) return false;
+  try {
+    return statSync(join(REPO_ROOT, p)).isFile();
+  } catch {
+    return false;
+  }
+}
+
 function inline(md) {
-  let h = esc(md);
-  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
-  h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  // `u` is already escaped by esc() above — escaping again would double-encode &.
-  h = h.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, t, u) => `<a href="${u}">${t}</a>`);
-  return h;
+  // Split on code spans first, so a path inside backticks can become a link while
+  // everything around it is escaped as plain text.
+  return String(md ?? '')
+    .split(/(`[^`]+`)/)
+    .map((part) => {
+      if (part.length > 2 && part.startsWith('`') && part.endsWith('`')) {
+        const raw = part.slice(1, -1);
+        const code = `<code>${esc(raw)}</code>`;
+        // A path that no longer exists (deleted or renamed by this very change)
+        // stays plain text — better than a link that 404s.
+        return isRepoFile(raw) ? `<a href="${esc(hrefFor(raw, null))}">${code}</a>` : code;
+      }
+      let h = esc(part);
+      h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      // `u` is already escaped by esc() above — escaping again would double-encode &.
+      h = h.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, t, u) => `<a href="${u}">${t}</a>`);
+      return h;
+    })
+    .join('');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -100,6 +127,7 @@ main{max-width:820px;margin:0 auto;padding:40px 24px 80px}
 h1{font-size:26px;margin:0 0 6px}
 h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8b93a7;margin:32px 0 10px}
 a{color:#7aa2f7;text-decoration:none} a:hover{color:#9db4ff;text-decoration:underline}
+a code{color:inherit;border:1px solid #253049} a:hover code{border-color:#3a4a6b}
 .meta{color:#8b93a7;font-size:13px;margin-bottom:28px}
 .tag{display:inline-block;padding:1px 8px;border:1px solid #2a3040;border-radius:999px;font-size:12px;color:#b8c0d4}
 ul{padding-left:20px;margin:0} li{margin:6px 0}
