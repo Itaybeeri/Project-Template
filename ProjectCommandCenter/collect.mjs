@@ -3,8 +3,8 @@
  *
  * This is the single source of truth for the Project Command Center. It is deliberately
  * generic: it parses whatever `CLAUDE.md`, `docs/features/FEATURE-INDEX.md`,
- * per-feature folders, `docs/adr/ADR-INDEX.md` and `docs/CI-ROADMAP.md` a
- * project has, and degrades gracefully when everything is still `<FILL:>`
+ * per-feature folders, `docs/adr/ADR-INDEX.md`, `docs/CI-ROADMAP.md` and
+ * `docs/IDEAS.md` a project has, and degrades gracefully when everything is still `<FILL:>`
  * template placeholders. Node built-ins only — no dependencies — so it copies
  * into the template and runs anywhere Node ≥ 18 does.
  *
@@ -356,6 +356,55 @@ function collectCiRoadmap() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ideas & thoughts (docs/IDEAS.md)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Parse the ideas notepad: an index table (`# | Idea | Status | Tag | Summary`)
+ * plus one `### NNN — Title` memo section per idea. Returns idea objects that pair
+ * each index row with its memo body (for the command center's drawer). Degrades to
+ * an empty list when the file is missing or still a `<FILL>` placeholder.
+ */
+function collectIdeas() {
+  const md = read('docs', 'IDEAS.md');
+  const memos = ideaMemos(md);
+  return parseTable(md, ['#', 'idea', 'status'])
+    .map((cells) => {
+      const [numRaw, ideaCell, statusCell, tagCell, ...rest] = cells;
+      const num = (numRaw || '').replace(/[^0-9]/g, '');
+      if (!num) return null; // skip legend/example rows without a real number
+      const { text: title } = unlink(ideaCell || '');
+      const tag = (tagCell || '').replace(/[*`]/g, '').trim();
+      const summary = (rest.join(' | ') || '').replace(/\s+/g, ' ').trim() || null;
+      if (hasFill(title) && hasFill(summary || '')) return null; // untouched example row
+      return {
+        num,
+        title: title && !hasFill(title) ? title : `idea ${num}`,
+        status: cleanStatus(statusCell),
+        tag: tag && tag !== '—' && !hasFill(tag) ? tag : null,
+        summary: summary && !hasFill(summary) ? summary : null,
+        body: memos[num] || null,
+      };
+    })
+    .filter(Boolean);
+}
+
+/** Map idea number → memo body text from the `### NNN — Title` sections (HTML comments stripped). */
+function ideaMemos(md) {
+  const out = {};
+  if (!md) return out;
+  const body = md.replace(/<!--[\s\S]*?-->/g, '');
+  const re = /^#{3,4}\s+(\d+)\s*[—–-]\s*([^\n]*)\n([\s\S]*?)(?=^#{2,4}\s|$(?![\s\S]))/gm;
+  let m;
+  while ((m = re.exec(body))) {
+    const num = m[1].replace(/[^0-9]/g, '');
+    const text = m[3].replace(/\s+$/, '').trim();
+    if (num && text) out[num] = text;
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // git
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -504,6 +553,7 @@ export function collectState() {
   const features = collectFeatures(gitState.branches);
   const adrs = collectAdrs();
   const ciRoadmap = collectCiRoadmap();
+  const ideas = collectIdeas();
   const rel = collectReleases();
 
   const byStatus = {};
@@ -524,6 +574,7 @@ export function collectState() {
     features,
     adrs,
     ciRoadmap,
+    ideas,
     ...rel,
     git: gitState,
     stats: {
@@ -534,6 +585,8 @@ export function collectState() {
       active: features.filter((f) => !['Queued', 'Done'].includes(f.column)).length,
       queued: features.filter((f) => f.column === 'Queued').length,
       adrs: adrs.length,
+      ideas: ideas.length,
+      openIdeas: ideas.filter((i) => !/graduated|dropped/i.test(i.status)).length,
       releases: rel.releases.length,
       openCiItems: ciRoadmap.filter((i) => /defer/i.test(i.status)).length,
       totalAcceptanceCriteria: totalAcs,

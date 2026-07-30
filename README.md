@@ -14,6 +14,7 @@ docs/
 ├── architecture.md               # Target architecture (enduring) + Current state (live)
 ├── GLOSSARY.md                   # canonical terms — one word per concept
 ├── ONBOARDING.md                 # fresh-machine setup
+├── IDEAS.md                      # notepad: ideas/thoughts worth discussing (index + memos)
 ├── CI-ROADMAP.md                 # deferred CI work + when to revisit it (read on every PR)
 ├── PORTAL-PATTERN.md             # optional: a "browse all the docs" portal pattern
 ├── adr/                          # Architecture Decision Records — global, append-only

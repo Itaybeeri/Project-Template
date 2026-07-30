@@ -78,6 +78,11 @@ architecture"** (read when you need it).
 - **Lessons (compounding memory):** `docs/LESSONS.md` — append-only log of project-specific
   gotchas the agent must not repeat. **Read it at the start of feature work**, and add an
   entry (in the same commit as the fix) whenever a correction reveals a repeatable mistake.
+- **Ideas & thoughts (notepad):** `docs/IDEAS.md` — a running list of ideas/thoughts worth
+  talking about that aren't (yet) features: an index table + one memo per idea, its own
+  number counter. Capture here the moment a thought lands (see the triage rule under Workflow
+  rules); an idea **graduates** into a feature when it's ready to build. Surfaced live in the
+  Project Command Center's **Ideas** panel.
 - **Release notes:** `docs/releases/` — one MD note per merge (readable bullets first),
   rendered to committed HTML in `ReleaseNotes/` (an index + one page per note, linking back
   to the feature / ADR / idea docs each note references). Written **automatically in phase 5,
@@ -106,7 +111,8 @@ architecture"** (read when you need it).
 Feature, ADR, idea, and release-note numbers are FOUR SEPARATE counters. Before picking a
 feature number, check `docs/features/FEATURE-INDEX.md` (lists used + **reserved** numbers);
 ideas have their own `001…` counter in `docs/IDEAS.md`; release notes have their own `0001…`
-counter in `docs/releases/`. Numbers are never reused.
+counter in `docs/releases/`. Numbers are never reused (a dropped idea keeps its number with
+status `Dropped`).
 
 ## Documentation discipline
 
@@ -132,6 +138,12 @@ completion rules (the two AI gates and the **NON-NEGOTIABLE merge gate**) live i
 **`docs/features/FEATURE-RULES.md`**. **Read both when working on a feature.**
 
 Router-level invariants (full rules in those two files):
+- **Triage tangents — never drop a thought, never silently build one.** When the
+  conversation drifts to something not tied to the current work, STOP and ask the human:
+  is this a **feature to implement** or an **idea/thought to just record**? A feature enters
+  the lifecycle (brainstorm → `FEATURE-INDEX.md`); an idea/thought lands in `docs/IDEAS.md`
+  as a row + memo **immediately**, so it survives the session. When an idea is ready to
+  build, it graduates into a feature (flip its row to `Graduated`, link the feature #).
 - **Match ceremony to weight** — trivial fix vs feature (`spec.md`) vs architecturally
   significant (`spec.md` + ADR). **No code before the plan is approved:** `plan-review`
   PASS **then** a human yes.

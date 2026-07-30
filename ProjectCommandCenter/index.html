@@ -146,6 +146,11 @@
   .st.accepted { color: var(--accent); background: rgba(52,211,153,.12); }
   .st.deferred { color: var(--ink-dim); background: rgba(255,255,255,.06); }
   .st.superseded, .st.deprecated { color: var(--ink-faint); background: rgba(255,255,255,.05); }
+  .st.graduated { color: #c4b5fd; background: rgba(167,139,250,.12); }
+  .st.dropped { color: var(--ink-faint); background: rgba(255,255,255,.05); text-decoration: line-through; }
+  .row.click { cursor: pointer; transition: background .12s ease; }
+  .row.click:hover { background: var(--panel-2); }
+  .row .tag { font-size: 10px; color: var(--ink-faint); border: 1px solid var(--line-2); border-radius: 999px; padding: 0 7px; margin-left: 8px; vertical-align: middle; }
 
   /* ── git activity ───────────────────────────────────────────────────────── */
   .commits { max-height: 340px; overflow-y: auto; }
@@ -340,6 +345,7 @@ const NAV = [
   { id: 'pipeline', label: 'Delivery pipeline', icon: '▦' },
   { id: 'overview', label: 'Overview', icon: '◈' },
   { id: 'decisions', label: 'Decisions & CI', icon: '⧉' },
+  { id: 'ideas', label: 'Ideas', icon: '✦' },
   { id: 'releases', label: 'Releases', icon: '⌂' },
   { id: 'activity', label: 'Activity', icon: '⎇' },
 ];
@@ -366,6 +372,7 @@ function render(s) {
           ${overview(p)}
         </section>
         <section class="view" id="view-decisions" hidden>${decisionsSection(s)}</section>
+        <section class="view" id="view-ideas" hidden>${ideasSection(s)}</section>
         <section class="view" id="view-releases" hidden>${releasesSection(s)}</section>
         <section class="view" id="view-activity" hidden>${gitSection(s)}</section>
       </div>
@@ -380,7 +387,12 @@ function render(s) {
   // Deep link: #<num> or #<num>/<Phase> opens that feature's drawer (shareable).
   const raw = decodeURIComponent(location.hash.replace(/^#/, ''));
   const [num, ph] = raw.split('/');
-  if (num) { const f = s.features.find((x) => x.num === num); if (f) openDrawer(f, s, ph); }
+  if (num === 'idea' && ph) {
+    const i = (s.ideas || []).find((x) => x.num === ph);
+    if (i) { showView('ideas'); openIdeaDrawer(i); }
+  } else if (num) {
+    const f = s.features.find((x) => x.num === num); if (f) openDrawer(f, s, ph);
+  }
 }
 
 function showView(id) {
@@ -438,6 +450,7 @@ function tiles(st, s) {
     { n: st.queued, l: 'Queued', accent: false },
     { n: st.done, l: 'Done', accent: false },
     { n: st.adrs, l: 'ADRs', accent: false },
+    { n: st.openIdeas || 0, l: 'Open ideas', accent: false },
     { n: st.totalAcceptanceCriteria, l: 'Accept. criteria', accent: false },
   ];
   return `<div class="tiles">${items.map((t) => `
@@ -518,6 +531,35 @@ function statusClass(s) {
 }
 
 function emptyRow(t) { return `<div class="row"><div class="body"><div class="d">${esc(t)}</div></div></div>`; }
+
+// ── ideas & thoughts ─────────────────────────────────────────────────────────
+function ideasSection(s) {
+  const ideas = s.ideas || [];
+  return `
+    <div class="sec-head"><h2>Ideas &amp; thoughts</h2><span class="hint">notepad of things worth talking about · <code>docs/IDEAS.md</code></span></div>
+    <div class="panel">${ideas.length ? ideas.map(ideaRow).join('') : emptyRow('No ideas captured yet — jot the first one in docs/IDEAS.md.')}</div>`;
+}
+
+function ideaRow(i) {
+  const clickable = i.body ? ' click' : '';
+  return `<div class="row${clickable}" ${i.body ? `data-idea="${esc(i.num)}"` : ''}>
+    <div class="idx">${esc(i.num)}</div>
+    <div class="body">
+      <div class="t">${esc(i.title)}${i.tag ? `<span class="tag">${esc(i.tag)}</span>` : ''}</div>
+      ${i.summary ? `<div class="d">${esc(i.summary)}</div>` : ''}
+    </div>
+    <span class="st ${ideaStatusClass(i.status)}">${esc(i.status)}</span>
+  </div>`;
+}
+
+function ideaStatusClass(s) {
+  const v = (s || '').toLowerCase();
+  if (v.includes('graduat')) return 'graduated';
+  if (v.includes('drop')) return 'dropped';
+  if (v.includes('discuss')) return 'accepted';
+  if (v.includes('park')) return 'deferred';
+  return 'proposed'; // Open / anything else
+}
 
 // ── releases (docs/releases/, parsed by ReleaseNotes/parse.mjs) ───────────────
 
@@ -606,10 +648,38 @@ function wireCards(s) {
   document.querySelectorAll('.card').forEach((el) => {
     el.addEventListener('click', () => openDrawer(s.features.find((f) => f.num === el.dataset.num), s));
   });
+  document.querySelectorAll('.row[data-idea]').forEach((el) => {
+    el.addEventListener('click', () => openIdeaDrawer((s.ideas || []).find((i) => i.num === el.dataset.idea)));
+  });
   document.querySelectorAll('.row.rel').forEach((el) => {
     el.addEventListener('click', () => openReleaseDrawer((s.releases || []).find((n) => n.num === el.dataset.num)));
   });
   document.getElementById('scrim').onclick = closeDrawer;
+}
+
+function openIdeaDrawer(i) {
+  if (!i) return;
+  DRAWER_F = null;
+  const d = document.getElementById('drawer');
+  d.style.setProperty('--phc', 'var(--accent)');
+  d.innerHTML = `
+    <button class="close" onclick="closeDrawer()">✕</button>
+    <div class="dhead">
+      <div class="eyebrow">Idea ${esc(i.num)} · ${esc(i.status)}</div>
+      <h1 style="margin:8px 0 0;font-size:21px;letter-spacing:-.02em">${esc(i.title)}</h1>
+      <div class="dsub">${i.summary ? esc(i.summary) : 'No summary.'}</div>
+      <div class="chips" style="gap:6px;margin-top:12px">
+        <span class="chip">status: ${esc(i.status)}</span>
+        ${i.tag ? `<span class="chip">${esc(i.tag)}</span>` : ''}
+        <span class="chip off">docs/IDEAS.md</span>
+      </div>
+    </div>
+    <div class="dbody"><div class="phase-panel">${i.body
+      ? `<div class="panel-head-row"><h4>Memo</h4><span class="dim mono">docs/IDEAS.md</span></div><div class="md">${mdToHtml(i.body)}</div>`
+      : emptyPanel('No memo written yet — add notes under this idea in docs/IDEAS.md.', 'docs/IDEAS.md')}</div></div>`;
+  d.classList.add('open');
+  document.getElementById('scrim').classList.add('open');
+  history.replaceState(null, '', `#idea/${i.num}`);
 }
 
 function openDrawer(f, s, wantPhase) {
